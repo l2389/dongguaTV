@@ -3,7 +3,7 @@
     "appName": "E视界",
     "webDir": "public",
     "server": {
-        "url": "https://ednovas.video",
+        "url": "https://dgtv.l2389.eu.org",
         "cleartext": true
     },
     "plugins": {
