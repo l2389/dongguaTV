@@ -36,7 +36,7 @@
 | **⚡ 极速缓存** | 内置 **SQLite** 数据库缓存，热搜词秒级响应，支持无限存储。 |
 | **📺 沉浸播放** | **影院模式**设计，智能线路测速，自动故障转移，支持 DLNA/AirPlay 投屏。 |
 | **🌏 大陆优化** | 智能 IP 检测，自动切换 **TMDB 反代**；内置 **CORS 视频代理**，解决资源站防盗链。 |
-| **� 多端适配** | 完美适配 **Android TV** (遥控器)、**手机** (刘海屏) 和 **PC**。 |
+| **📱 多端适配** | 完美适配 **Android TV** (遥控器)、**手机** (刘海屏) 和 **PC**。 |
 
 ---
 
@@ -73,7 +73,7 @@ docker run -d -p 3000:3000 \
   ghcr.io/ednovas/dongguatv:latest
 ```
 
-### � 一键安装脚本 (Linux)
+### 📜 一键安装脚本 (Linux)
 
 适用于 Ubuntu/Debian/CentOS。
 
@@ -103,7 +103,7 @@ curl -fsSL https://raw.githubusercontent.com/ednovas/dongguaTV/main/install.sh |
     {
       "key": "unique_id_1",
       "name": "站点名称",
-      "api": "https://example.com/api.php/provide/vod/at/json",
+      "api": "https://example.com/api.php/provide/vod/",
       "active": true
     }
   ]
@@ -178,7 +178,7 @@ REMOTE_DB_URL=https://example.com/config/db.json
 
 ---
 
-## � 移动端 (Mobile App)
+## 📱 移动端 (Mobile App)
 
 本项目支持构建 Android APK，适配电视遙控器和手机。
 
