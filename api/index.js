@@ -14,10 +14,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // ========== 环境变量 ==========
-const REMOTE_DB_URL = process.env.REMOTE_DB_URL || '';
-const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
-const TMDB_PROXY_URL = process.env.TMDB_PROXY_URL || '';
-const ACCESS_PASSWORDS = (process.env.ACCESS_PASSWORD || '').split(',').map(p => p.trim()).filter(Boolean);
+const REMOTE_DB_URL = process.env['REMOTE_DB_URL'] || '';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || ''; // Keep Required
+const TMDB_PROXY_URL = process.env['TMDB_PROXY_URL'] || '';
+const ACCESS_PASSWORDS = (process.env['ACCESS_PASSWORD'] || '').split(',').map(p => p.trim()).filter(Boolean);
 
 // ========== 密码哈希映射 ==========
 const PASSWORD_HASH_MAP = {};
@@ -176,6 +176,43 @@ app.get('/api/tmdb-proxy', async (req, res) => {
     }
 });
 
+// ========== API: /api/tmdb-image (图片代理 - 仅流式转发) ==========
+app.get('/api/tmdb-image/:size/:filename', async (req, res) => {
+    const { size, filename } = req.params;
+    const allowSizes = ['w300', 'w342', 'w500', 'w780', 'w1280', 'original'];
+
+    // 安全检查
+    if (!allowSizes.includes(size) || !/^[a-zA-Z0-9_\-\.]+$/.test(filename)) {
+        return res.status(400).send('Invalid parameters');
+    }
+
+    const tmdbUrl = `https://image.tmdb.org/t/p/${size}/${filename}`;
+
+    try {
+        // 支持自定义反代 URL
+        let targetUrl = tmdbUrl;
+        if (TMDB_PROXY_URL) {
+            const proxyBase = TMDB_PROXY_URL.replace(/\/$/, '');
+            targetUrl = `${proxyBase}/t/p/${size}/${filename}`;
+        }
+
+        // console.log(`[Vercel Image] Proxying: ${targetUrl}`);
+        const response = await axios({
+            url: targetUrl,
+            method: 'GET',
+            responseType: 'stream',
+            timeout: 10000
+        });
+
+        // 缓存控制：公共缓存，有效期1天
+        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+        response.data.pipe(res);
+    } catch (error) {
+        console.error(`[Vercel Image Error] ${tmdbUrl}:`, error.message);
+        res.status(404).send('Image not found');
+    }
+});
+
 // ========== API: /api/search (SSE 流式搜索) ==========
 app.get('/api/search', async (req, res) => {
     const keyword = req.query.wd;
@@ -206,6 +243,14 @@ app.get('/api/search', async (req, res) => {
     }
 
     if (sites.length === 0) {
+        // 即使没有站点也要返回 SSE 格式，否则 EventSource 会报错
+        if (stream) {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.write(`data: ${JSON.stringify({ error: '未配置资源站点，请在环境变量中设置 REMOTE_DB_URL' })}\n\n`);
+            res.write('event: done\ndata: {}\n\n');
+            return res.end();
+        }
         return res.json({ error: 'No sites configured. Please set REMOTE_DB_URL.' });
     }
 
